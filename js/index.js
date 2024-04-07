@@ -1,39 +1,46 @@
-const userList=document.getElementById('user-list')
-let repoList=document.getElementById('repos-list')
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("github-form")
+  const searchInput = document.getElementById("search")
+  const userList = document.getElementById("user-list")
+  const repos = document.getElementById("repos-list")
 
+  form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      userList.innerHTML = ""
+      repos.innerHTML = ""
 
-const form=document.querySelector('#github-form')
-form.addEventListener('submit',(e)=>{
-    e.preventDefault()
-    let username=e.target.search.value
-    console.log('searching github')
-    fetch(`https://api.github.com/search/users?q=${username}`)
-    .then(res=>res.json())
-    .then(data=>data.forEach(user=>{
+      fetch(`https://api.github.com/search/users?q=${e.target.search.value}`)
+      .then(response => response.json()) 
+      .then(usersData => usersData.items.forEach(renderUser))
+  })
+  function renderUser(userData){
+      const name = document.createElement("li")
+      name.textContent = userData.login;
 
-      let h5=document.createElement('h5')  
-      h5.innerText =`${user.login}`
-      let img=document.createElement('img')  
-      img.src=`{user.avatar}`
-      let link=document.createElement('a')
-      link.href=`link to their  profile`
+      const avatar = document.createElement("img")
+      avatar.src = userData.avatar_url;
+      avatar.alt = `${userData.login} avatar image`
 
-      
-      
-      h5.addEventListener('click',(e)=>{
-        let username=e.target.value
+      avatar.addEventListener("click", (e) => handleClick(userData))
+       
+      const profileLink = document.createElement("a")
+       profileLink.href = userData.html_url;
+       profileLink.textContent = "GitHub Profile"
 
-        fetch(`https://api.github.com/users/${username}/repos`)
-        .then(res=>res.json())
-        .then(repos=>repos.forEach(repo=>{
-         let repo=document.createElement('li')
-         repo.innerText=`${repo.name}`
-
-        }))
-        repoList.append(repo)
-      });
-      userList.appendChild(h5,img,link)
-    })
-          
-)
+       userList.append(name, avatar, profileLink)
+  }
+  function handleClick(userData){
+      fetch(`https://api.github.com/users/${userData.login}/repos`)
+      .then (response = response.json())
+      .then(userRepos => {
+          userList.innerHTML =""
+          renderUser(userData)
+          userRepos.forEach(renderRepos)
+      })
+  }
+  function renderRepos(user){
+      const li = document.createElement("li")
+      li.textContent = user.full_name
+      repos.append(li)
+  }
 })
